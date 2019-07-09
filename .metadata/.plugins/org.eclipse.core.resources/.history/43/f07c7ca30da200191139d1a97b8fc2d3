@@ -1,0 +1,12 @@
+testAppURL=http://www.flipkart.com
+
+#Default username and password
+defaultUserName=b03810742@gmail.com
+defaultPassword=9892338563
+
+
+#paths
+xlspath=C:\\Users\\rahul_barapatre\\workspace\\com.flipkart.testProject\\testData\\flipkart.xlsx
+iedriver_exe=iedriver.exe
+chromedriver_exe=C:\\Users\\rahul_barapatre\\workspace\\newProj\\browserDrivers\\chromedriver.exe
+firefox_exe=D:\\important softwares\\selenium related\\Browser Drivers-webdrivers\\geckodriver.exe

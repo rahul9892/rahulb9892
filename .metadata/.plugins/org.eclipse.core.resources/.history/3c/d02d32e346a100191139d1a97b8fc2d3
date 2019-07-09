@@ -1,0 +1,76 @@
+package reusableUtilities;
+
+import java.util.Hashtable;
+
+import javax.swing.text.html.CSS;
+
+import org.openqa.selenium.By;
+import org.testng.Assert;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import com.qtpselenium.zoho.project.base.BaseTest;
+import com.qtpselenium.zoho.project.util.DataUtil;
+import com.qtpselenium.zoho.project.util.ExtentManager;
+import com.qtpselenium.zoho.project.util.Xls_Reader;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+
+public class LoginTest extends BaseTest {
+	ExtentReports rep=ExtentManager.getInstance();
+	public static ExtentTest test;
+
+	String testCaseName="LoginTest";
+	@Test(dataProvider="getData")
+	public void doLogin(Hashtable<String,String> data){
+		  test=rep.startTest("LoginTest") ;
+		  test.log(LogStatus.INFO, "Starting Login Test");
+
+		if(!DataUtil.isRunnable(testCaseName, xls)|| data.get("Runmode").equals("N")){
+			//<--! Extent report fearuretest.log(LogStatus.INFO,"Skipping the test case as runmode is NO"); 
+			throw new SkipException("Skipping the test case as RunMode is equal to N");
+		}
+			test.log(LogStatus.INFO, "Opening the browser");
+			openBrowser(data.get("Browser"));
+			doLogin(prop.getProperty("defaultUserName"), prop.getProperty("defaultPassword"),test,"loginid_xpath","password_xpath");
+			Assert.assertEquals(isElementPresent("leadLink_id"), true);
+			
+	}
+	
+	
+	@AfterMethod
+	public void quit(){
+		rep.endTest(test);
+		  rep.flush();
+		 if(driver!=null){
+			  driver.quit();
+		  }
+	 }
+	/*@AfterSuite
+	public void quit1(){
+		rep.endTest(test);
+		  rep.flush();
+		 if(driver!=null){
+			  driver.quit();
+		  }
+	}*/
+	
+	@DataProvider
+	//this is done to provide the data provider as we cannot create data provider to each and every test case 
+	public Object[][] getData(){
+		super.init();
+		
+		 xls=new Xls_Reader(prop.getProperty("xlspath"));
+		return DataUtil.getTestdata(xls,testCaseName,"Data");
+}
+	@BeforeMethod
+	public void init(){
+		
+	}
+}

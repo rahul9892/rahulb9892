@@ -1,0 +1,35 @@
+/**
+ * This class contain the extent report configuration for the testNG framework.
+ * some Points to understand -->  'ExtentReports' in "public static ExtentReports getInstance(){" is the rerurn type  
+ */
+package com.qtpselenium.zoho.project.util;
+
+import java.io.File;
+import java.util.Date;
+
+import com.relevantcodes.extentreports.DisplayOrder;
+import com.relevantcodes.extentreports.ExtentReports;
+
+
+public  class ExtentManager  {
+	private static ExtentReports extent;
+	public static Date d=new Date();
+	public static String newD;
+	//public File f=null;
+	public static ExtentReports getInstance() {
+		if (extent == null) {
+			 
+			newD=d.toString().replace(":", "_").replace(" ", "_")+".html";
+			//extent	
+			System.out.println("D:\\selenium_files\\ExtentReports\\"+newD);
+			extent = new ExtentReports(System.getProperty("user.dir")+"\\RunReports\\"+newD, true, DisplayOrder.NEWEST_FIRST);
+			//C:\Users\QTP Automation\maven\DataDriven_Zoho_April2017\RunReports
+			extent.loadConfig(new File(System.getProperty("user.dir")+"//suite//ReportsConfig.xml"));
+			//load(new File(System.getProperty("user.dir")+"//suite//ReportsConfig.xml"));
+
+			// optional
+			//extent.addSystemInfo("Selenium Version", "2.53.0").addSystemInfo("Environment", "QA");
+		}
+		return extent;
+	}
+}

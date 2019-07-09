@@ -1,0 +1,16 @@
+package testCases;
+
+import java.util.Hashtable;
+
+import org.testng.annotations.Test;
+
+import reusableUtilities.BaseTest;
+
+public class iphoneBuy extends BaseTest {
+
+	@Test(dataProviderClass=BaseTest.class,dataProvider="suiteDataProvider")
+	public void buy(Hashtable<String, String> data ) {
+		
+	}
+	
+}

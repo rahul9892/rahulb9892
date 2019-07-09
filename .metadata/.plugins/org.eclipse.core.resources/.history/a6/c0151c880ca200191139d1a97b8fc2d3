@@ -1,0 +1,100 @@
+package com.flipkart.testCases;
+
+import java.util.Hashtable;
+
+import org.openqa.selenium.WebElement;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import com.flipkart.objectRepository.objectrepository;
+import com.flipkart.reusableUtilities.ExtentManager;
+import com.flipkart.reusableUtilities.initialSetup;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+
+public class LoginTest extends initialSetup {
+
+	ExtentReports rep = ExtentManager.getInstance();
+	public static ExtentTest test;
+
+	@Test(dataProvider = "getData")
+	public void doLogin(Hashtable<String, String> data)
+			throws InterruptedException {
+		// String methodName=m.getClass().getSimpleName();
+
+		test = rep.startTest(initialSetup.testCaseName);
+
+		test.log(LogStatus.INFO, "Starting following test case execution-->"
+				+ initialSetup.testCaseName);
+		// init();
+		System.out.println(data);
+		openBrowser(data.get("Browser"));
+		navigate(data.get("appurl"));
+
+		sendKeys(objectrepository.userName, data.get("UserName"));
+		sendKeys(objectrepository.password, data.get("Password"));
+		click(objectrepository.submitButton);
+		sleep(5);
+		sendKeys(objectrepository.searchProduct, data.get("wishlistProduct"));
+		click(objectrepository.searchItemButton);
+
+		if (objectrepository.clickProduct.getText()
+				.contains(data.get("colour"))) {
+			click(objectrepository.clickProduct);
+		}
+		switchToNexttab();
+		if (objectrepository.AddTokart.getText()
+				.equalsIgnoreCase("Add To Cart")) {
+			click(objectrepository.AddTokart);
+			Thread.sleep(3000);
+		} else {
+			test.log(LogStatus.FAIL,
+					"Add to cart button is NOT present and hence failing this test case");
+			Assert.assertEquals(true, false);
+		}
+
+		// code to increase the quantity of item
+		if (objectrepository.productSize.get(1).isEnabled()
+				& objectrepository.productSize.get(1).isDisplayed()) {
+			click(objectrepository.productSize.get(1));
+
+		} else {
+			test.log(LogStatus.FAIL,
+					"Cannot increase the size of the product hence failing test case");
+
+		}
+		sleep(3);
+	//	objectrepository.placeOrder.get(4).click();
+		for(WebElement elem:objectrepository.placeOrder){
+			if(elem.getText().equalsIgnoreCase("place order")){
+				click(elem);
+				break;
+			}
+		}
+		sleep(5);
+		sendKeys(objectrepository.name,data.get("name"));
+		sendKeys(objectrepository.phoneNumber, data.get("mobileNo"));
+		sendKeys(objectrepository.pinCode, data.get("pincode"));
+		sendKeys(objectrepository.locality,data.get("locality"));
+		sendKeys(objectrepository.completeAddress, data.get("completeAddress"));
+		//sendKeys(objectrepository.city, data.get("city"));
+				selectValues("Maharashtra");
+				for(WebElement elem1: objectrepository.wordAddressRadioButton){
+					if(elem1.getText().contains("Work")){
+						click(elem1);
+						break;
+					}
+			}
+				
+				for(WebElement save:objectrepository.saveAndDiliver){
+					if(save.getText().equalsIgnoreCase("Save and Deliver Here")){
+						click(save);
+						break;
+					}
+				}
+			
+				logout();
+	}
+
+}

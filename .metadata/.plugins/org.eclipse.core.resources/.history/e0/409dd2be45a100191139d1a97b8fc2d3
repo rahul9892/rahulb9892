@@ -1,0 +1,69 @@
+package com.qtpselenium.zoho.project.util;
+
+import java.util.Hashtable;
+
+
+public class DataUtil {
+	 //public static String sheetName="Data";
+	//I have passed the sheetname as an argument to this method if it does NOT work we can replace the same
+	public static int rows;
+	public static Object[][] getTestdata(Xls_Reader xls,String testCaseName,String sheetName){
+		
+		int testStartRowNum=1;
+while(!xls.getCellData(sheetName, 0, testStartRowNum).equals(testCaseName)){
+	testStartRowNum++;
+		}
+		System.out.println("Test Starts from row-->"+testStartRowNum);
+		int colStartRownumber=testStartRowNum+1;
+		int dataStartRowNumber=testStartRowNum+2;
+		System.out.println("Column Start Row number is -->"+colStartRownumber);
+		System.out.println("Data start Start Row number is -->"+dataStartRowNumber);
+		
+		//calculate the rows of data 
+		rows=0;
+		while(!xls.getCellData(sheetName, 0,dataStartRowNumber+rows ).equals("")){
+			rows++;
+		}
+		System.out.println("Total Number of data rows are -->"+rows);
+		int cols=0;
+		while(!xls.getCellData(sheetName, cols, colStartRownumber).equals("")){
+			cols++;
+		}
+		System.out.println("Total Columns in test case is -->"+cols);
+		
+		//Printing the data of the sheet
+		Hashtable<String,String> table=null;
+		Object[][] data=new Object[rows][1];
+		int dataRow=0;
+		for(int rNum=dataStartRowNumber;rNum<dataStartRowNumber+rows;rNum++){
+			table=new Hashtable<String,String>();
+			for(int cNum=0;cNum<cols;cNum++){
+				String key =xls.getCellData(sheetName, cNum, colStartRownumber);
+				String value=xls.getCellData(sheetName, cNum, rNum);
+				table.put(key, value);
+			}
+			//System.out.println("-------------------------------------");
+			data[dataRow][0]=table;
+			dataRow++;
+		}
+		return data;
+	}
+		
+	public static boolean isRunnable(String testCasename,Xls_Reader xls){
+		
+		String testCasesSheet2="TestCases";
+		//System.out.println(testCasename);
+		 int colNum1=xls.getColumnCount(testCasesSheet2);
+		for(int g=0;g<xls.getRowCount(testCasesSheet2);g++ ){
+			if(xls.getCellData(testCasesSheet2, 0, g).equals(testCasename)){
+				if(xls.getCellData(testCasesSheet2, 1, g).equals("N")){
+					return false;
+				}else{
+					return true;
+					}
+				}
+			}
+		return false;
+	}
+}
+

@@ -1,0 +1,74 @@
+package com.flipkart.reusableUtilities;
+
+import org.testng.ITestContext;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
+
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+
+public class initialSetup extends BaseTest {
+
+	public static String testCaseName;
+	public static ExtentReports rep;
+	public static ExtentTest test;
+
+	@DataProvider(name = "getData")
+	public Object[][] getData() {
+		super.init();
+		xls = new Xls_Reader(prop.getProperty("xlspath"));
+		return DataUtil.getTestdata(xls, testCaseName, "DEV");
+	}
+
+	@BeforeSuite
+	public void beforeSuite() {
+		// System.out.println("before");
+
+		System.out.println("This is before suite");
+		rep = ExtentManager.getInstance();
+
+	}
+
+	@AfterMethod
+	public void quit() {
+		if (rep != null) {
+			rep.endTest(test);
+			rep.flush();
+			if (driver != null) {
+				// driver.close();
+				driver.quit();
+			}
+		}
+	}
+
+	@BeforeTest
+	public void beforeTest(ITestContext ctx) {
+		testCaseName = ctx.getName();
+		System.out.println(testCaseName);
+		test=rep.startTest(testCaseName);
+		test.log(LogStatus.INFO,
+				"Started the execution of following test case-->"
+						+ testCaseName);
+	}
+	
+	@AfterTest
+	public void afterTest(){
+		
+		test.log(LogStatus.INFO, "This is ending of test case execution");
+		rep.endTest(test);
+		if(driver!=null){
+			driver.quit();
+		}
+	}
+	
+	@AfterSuite
+	public void afterSuite(){
+		rep.flush();
+	}
+
+}

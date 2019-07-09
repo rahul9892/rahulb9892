@@ -1,0 +1,444 @@
+package reusableUtilities;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+//import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
+
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+
+/*import com.qtpselenium.zoho.project.util.DataUtil;
+import com.qtpselenium.zoho.project.util.ExtentManager;
+import com.qtpselenium.zoho.project.util.Xls_Reader;
+import com.qtpselenium.zoho.project.util.emailUtil;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;*/
+
+//import com.relevantcodes.extentreports.LogStatus;
+
+public class BaseTest {
+
+	public WebDriver driver = null;
+	public Properties prop;
+	public Xls_Reader xls;
+	public static ExtentTest test;
+	boolean gridRun = false;
+	public static ExtentReports rep;
+
+	public void init() {
+		if (prop == null) {
+			prop = new Properties();
+			// "user.dir"+"src\test\java\resources\projectconfig.properties"
+			try {
+				FileInputStream fs = new FileInputStream(
+						System.getProperty("user.dir") + "\\src\\main\\java\\reusableUtilities\\projectconfig.properties");
+				
+				//D:\flipkartShop\flipkartShop\src\main\java\reusableUtilities\projectconfig.properties
+				prop.load(fs);
+				System.out.println("This is the AppURL-->" + prop.getProperty("appurl"));
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			System.out
+					.println(System.getProperty("user.dir") + "\\src\\test\\java\\resources\\projectconfig.properties");
+		}
+	}
+
+	public void openBrowser(String bType) {
+		if (!gridRun) {
+			if (bType.equals("chrome")) {
+				System.setProperty("webdriver.chrome.driver", prop.getProperty("chromedriver_exe"));
+				driver = new ChromeDriver();
+			} else if (bType.equals("firefox")) {
+				System.setProperty("webDriver.gecko.driver", prop.getProperty("firefox_exe"));
+				driver = new FirefoxDriver();
+			}
+		} else {
+			DesiredCapabilities cap = null;
+			if (bType.equals("firefox")) {
+				cap = DesiredCapabilities.firefox();
+				cap.setBrowserName("firefox");
+				cap.setJavascriptEnabled(true);
+				cap.setPlatform(org.openqa.selenium.Platform.WINDOWS);
+			} else if (bType.equals("chrome")) {
+				cap = DesiredCapabilities.chrome();
+				cap.setBrowserName("chrome");
+				cap.setJavascriptEnabled(true);
+				cap.setPlatform(org.openqa.selenium.Platform.WINDOWS);
+			}
+
+			try {
+				driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), cap);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		driver.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);
+		driver.manage().window().maximize();
+	}
+
+	public void navigate(String appurl) {
+		driver.navigate().to(appurl);
+	}
+
+	public void type(String email_xpath, String content) {
+		getElement(email_xpath).sendKeys(content);
+		// driver.findElement(By.xpath(prop.getProperty("email_xpath"))).sendKeys(prop.get("content"));
+	}
+
+	public void click(String locatorKey) {
+		// driver.findElement(By.xpath(prop.getProperty("button_xpath"))).click();
+		getElement(locatorKey).click();
+	}
+
+	// finding element and returning it
+	public WebElement getElement(String locatorKey) {
+		WebElement e = null;
+		try {
+			if (locatorKey.endsWith("_xpath")) {
+				e = driver.findElement(By.xpath(prop.getProperty(locatorKey)));
+			} else if (locatorKey.contains("id")) {
+				e = driver.findElement(By.id(prop.getProperty(locatorKey)));
+			} else if (locatorKey.endsWith("_name")) {
+				e = driver.findElement(By.name(prop.getProperty(locatorKey)));
+			} else if (locatorKey.endsWith("_css")) {
+				e = driver.findElement(By.cssSelector(prop.getProperty(locatorKey)));
+				// driver.findElement(By.className(className)
+
+			} else {
+				reportFailture("Locator NOT found/incorrect locator-->" + locatorKey);
+			}
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			reportFailture(ex.getMessage());
+		}
+		return e;
+
+	}
+	/* ************validations *******************/
+
+	public boolean verifyText(String locatorKey, String expectedtext) {
+		String actualText = getElement(locatorKey).getText();
+		if (actualText.trim().equals(prop.getProperty(expectedtext))) {
+			Assert.assertTrue(true, "Correct String is Present");
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+
+	public boolean isElementPresent(String locatorKey) {
+		List<WebElement> list = null;
+		WebElement e = null;
+		if (locatorKey.endsWith("_xpath")) {
+			list = driver.findElements(By.xpath(prop.getProperty(locatorKey)));
+		} else if (locatorKey.endsWith("_id")) {
+			list = driver.findElements(By.id(prop.getProperty(locatorKey)));
+		} else if (locatorKey.endsWith("_name")) {
+			list = driver.findElements(By.name(prop.getProperty(locatorKey)));
+		} else if (locatorKey.endsWith("_css")) {
+			list = driver.findElements(By.cssSelector(prop.getProperty(locatorKey)));
+		} else {
+			reportFailture("Locator NOT found/incorrect locator-->" + locatorKey);
+			Assert.fail("Locator Key is NOT found in Properties file-->" + locatorKey);
+		}
+		if (list.size() == 0) {
+			return false;
+		} else {
+			return true;
+		}
+
+	}
+
+	/*
+	 * public boolean verifytext(){ return false;
+	 * 
+	 * }
+	 */
+	/********************** Reporting Functions ****************/
+
+	public void takeScreenShot() {
+		Date d = new Date();
+		String fileName = d.toString().replace(":", "_").replace(" ", "_") + ".png";
+		File srcFileName = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+		try {
+			FileUtils.copyFile(srcFileName, new File(System.getProperty("user.dir") + "\\screenshot\\" + fileName));
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+	}
+
+	public void reportFailture(String failMessage) {
+		test.log(LogStatus.FAIL, "This test Case has failed");
+		takeScreenShot();
+		Assert.fail(failMessage);
+	}
+
+	public void reportPass(String msg) {
+		/*
+		 * test.log(LogStatus.PASS,"This Test case has passed");
+		 */
+	}
+	/*
+	 * public void takeScreenShot(){ //fileName of the screenshot Date d=new
+	 * Date(); String screenshotFile=d.toString().replace(":", "_").replace(" ",
+	 * "_")+".png"; //take screenshot for File
+	 * scrFile=((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE); try{
+	 * //copying the screenshot into the screenshot folder
+	 * FileUtils.copyFile(scrFile, new
+	 * File(System.getProperty("user.dir")+"\\screenshots"+screenshotFile));
+	 * }catch(Exception e){ System.out.println("Screenshot capture Failed");
+	 * e.printStackTrace( ); } }
+	 */
+
+	// ************************App functions*******************************
+	public boolean doLogin(String username, String password, ExtentTest test, String loginLinkXpath,
+			String passwordXpath) {
+		test.log(LogStatus.INFO, "Navigating the test");
+		navigate(prop.getProperty("appurl"));
+		// test.log(LogStatus.valueOf(appu), );
+		click("loginLink_xpath");
+		waitForPageToLoad();
+		driver.switchTo().frame(0);
+		type(loginLinkXpath, username);
+		type(passwordXpath, password);
+		waitForPageToLoad();
+		/*
+		 * WebElement submit=driver.findElement(By.name("submit"));
+		 * JavascriptExecutor js=(JavascriptExecutor)driver;
+		 * js.executeScript("arguments[0].click();", submit);
+		 */
+		// driver.findElement(By.id("submit_id")).click();
+		// click(prop.getProperty("submit_id"));
+		click("submit_name");
+		waitForPageToLoad();
+		driver.switchTo().defaultContent();
+		if (driver.findElements(By.xpath(prop.getProperty("remindme_xpath"))).size() > 0) {
+			click(prop.getProperty("remindme_xpath"));
+		} else {
+			click("crmLink_xpath");
+			waitForPageToLoad();
+			// driver.findElement(By.xpath("(//div[@class='app-nm'])[position()=2]")).click();
+		}
+		// doLogin(data.get("UserName"),
+		// data.get("Password"),test,prop.getProperty("loginLink_xpath"));
+		return false;
+	}
+
+	public void waitForPageToLoad() {
+		JavascriptExecutor js = (JavascriptExecutor) driver;
+		String state = (String) js.executeScript("return document.readyState");
+		while (!state.equals("complete")) {
+			wait(7);
+			state = (String) js.executeScript("return document.readyState");
+		}
+	}
+
+	public void clickAndWait(String locator_clicked, String locator_pres) {
+		int count = 5;
+		for (int Ccount = 0; Ccount <= count; Ccount++) {
+			getElement(locator_clicked).click();
+			wait(2);
+			if (isElementPresent(locator_pres)) {
+				break;
+			}
+		}
+	}
+
+	public void wait(int timeToWaitInSec) {
+		try {
+			Thread.sleep(timeToWaitInSec * 1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public WebDriver getDriver(String bType) {
+		if (bType.equals("chrome")) {
+			// System.setProperty("webdriver.chrome.driver",prop.getProperty("chromedriver_exe")
+			// );
+			driver = new ChromeDriver();
+		}
+		if (bType.equals("firefox")) {
+			driver = new FirefoxDriver();
+		}
+		return driver;
+
+	}
+
+	public int getLeadRowNumber(String leadName) {
+		test.log(LogStatus.INFO, "Finding the lead in the Lead List");
+		test.log(LogStatus.INFO, "Lead Name which we are Finding is-->" + leadName);
+		List<WebElement> leadNames = driver.findElements(By.xpath(prop.getProperty("leadsNamesInList_xpath")));
+		for (int totalLeads = 0; totalLeads < leadNames.size(); totalLeads++) {
+			if (leadNames.get(totalLeads).getText().trim().equals(leadName)) {
+				return (totalLeads + 1);
+			}
+		}
+		return -1;
+	}
+
+	public WebElement getLeadElement(String Element) {
+		test.log(LogStatus.INFO, "Finding the lead and clicking on it");
+		test.log(LogStatus.INFO, "Lead record which we are finding is-->" + Element);
+		List<WebElement> leadNames = driver.findElements(By.xpath(prop.getProperty("leadsNamesInList_xpath")));
+		for (int newCount = 0; newCount < leadNames.size(); newCount++) {
+			if (leadNames.get(newCount).getText().trim().equals(Element)) {
+				WebElement newElement = leadNames.get(newCount);
+				return newElement;
+			}
+		}
+		return null;
+	}
+
+	public void waitforAlertToDisplayAndAccept() {
+		driver.findElement(By.id("deleteButton")).click();
+
+		WebDriverWait wait = new WebDriverWait(driver, 7);
+		wait.until(ExpectedConditions.alertIsPresent());
+		test.log(LogStatus.INFO, "Waiting for the Alert to display");
+		driver.switchTo().alert().accept();
+		waitForPageToLoad();
+		driver.switchTo().defaultContent();
+	}
+
+	public void switchToMainframe() {
+		wait(5);
+		driver.switchTo().defaultContent();
+		wait(1);
+		driver.switchTo().frame("MainFrame");
+
+	}
+
+	public void switchTomodal() {
+		wait(2);
+		driver.switchTo().defaultContent();
+		wait(1);
+		List<WebElement> modal = driver.findElements(By.id("ebRealModalFrame"));
+		driver.switchTo().frame(modal.size());
+	}
+
+	/*
+	 * @Test(priority=3,dependsOnMethods={"createLeadTest","convertLeadTest"})
+	 * public void deleteLeadAccountTest(){
+	 * 
+	 * }
+	 */
+	@AfterMethod
+	public void quit() {
+		if (rep != null) {
+			rep.endTest(test);
+			rep.flush();
+			if (driver != null) {
+				// driver.close();
+				driver.quit();
+			}
+		}
+
+	}
+	/*
+	 * @AfterSuite public void quit1(){ rep.endTest(test); rep.flush();
+	 * if(driver!=null){ driver.quit(); } }
+	 */
+	
+	@AfterSuite
+	public void afterSuiteMethod(){
+		emailUtil.emailUtilMethod();
+	}
+
+	/*@DataProvider(name ="suiteDataProvider")
+	// this is done to provide the data provider as we cannot create data
+	// provider to each and every test case
+	public Object[][] getData(Class testCaseName) {
+		// super.init();
+		rep = ExtentManager.getInstance();
+		String testCaseNameFin = testCaseName.getSimpleName().trim();
+		init();
+		xls = new Xls_Reader(prop.getProperty("xlspath"));
+		return DataUtil.getTestdata(xls, testCaseNameFin, "Data");
+		// driver.findElement(By.cssSelector("a[]")
+	}*/
+	
+	
+	@DataProvider(name ="suiteDataProvider")
+	// this is done to provide the data provider as we cannot create data
+	// provider to each and every test case
+	public Object[][] getData(Class testCaseName) {
+		// super.init();
+		rep = ExtentManager.getInstance();
+		String testCaseNameFin = testCaseName.getSimpleName().trim();
+		init();
+		xls = new Xls_Reader(prop.getProperty("xlspath"));
+		Object[][] dataPrevious_cbd=DataUtil.getTestdata(xls, "testClass_2", "Data");
+		Object[][] reader2=new Object[DataUtil.rows][1];
+		for (int i = 0; i < 2; i++) {
+            int j = i + 1;
+            reader2[1][1] = DataUtil.getTestdata(xls, "testClass_2", "Data");
+        }
+        return reader2;
+		// driver.findElement(By.cssSelector("a[]")
+	}
+	//D:\selenium_files\Data Driven Framework-Test NG_Requirement and other useful parameters\zoho.xlsx
+	@DataProvider(parallel = true)
+	// this is done to provide the data provider as we cannot create data
+	// provider to each and every test case
+	public Object[][] getConvertLeadRecord() {
+		// super.init();
+		init();
+		xls = new Xls_Reader(prop.getProperty("xlspath"));
+		return DataUtil.getTestdata(xls, "ConvertLeadTest", "Data");
+		// driver.findElement(By.cssSelector("a[]")
+	}
+
+/*	@DataProvider(parallel = true)
+	// this is done to provide the data provider as we cannot create data
+	// provider to each and every test case
+	public Object[][] getDeleteLeadRecord() {
+		// super.init();
+		init();
+		xls = new Xls_Reader(prop.getProperty("xlspath"));
+		return DataUtil.getTestdata(xls, "deleteLeadAccountTest", "Data");
+		// driver.findElement(By.cssSelector("a[]")
+	}*/
+
+	/*
+	 * @BeforeMethod public void init() { System.out.println(
+	 * "This is before Method"); }
+	 */
+
+	@BeforeSuite
+	public void beforeSuite(){
+		System.out.println("This is before suite");
+	}
+}
